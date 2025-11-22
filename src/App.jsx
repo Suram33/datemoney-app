@@ -142,19 +142,60 @@ export default function DateMoneyApp() {
   };
 
   const handleMediaUpload = (type) => {
-    const newMedia = {
-      id: Date.now(),
-      type: type,
-      url: type === 'video' ? '🎥' : '📸',
-      caption: 'New post',
-      likes: 0,
-      duration: type === 'video' ? '7s' : null
+    // Create a file input element
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = type === 'video' ? 'video/*' : 'image/*';
+    
+    input.onchange = (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        // Check file size (max 10MB)
+        if (file.size > 10 * 1024 * 1024) {
+          alert('File too large! Maximum size is 10MB');
+          return;
+        }
+        
+        // Check video duration for videos
+        if (type === 'video') {
+          const video = document.createElement('video');
+          video.preload = 'metadata';
+          video.onloadedmetadata = () => {
+            window.URL.revokeObjectURL(video.src);
+            if (video.duration > 10) {
+              alert('Video too long! Maximum duration is 10 seconds');
+              return;
+            }
+            addMediaToProfile(file, type, video.duration);
+          };
+          video.src = URL.createObjectURL(file);
+        } else {
+          addMediaToProfile(file, type, null);
+        }
+      }
     };
-    setFormData(prev => ({
-      ...prev,
-      media: [...prev.media, newMedia]
-    }));
+    
+    input.click();
     setShowMediaUpload(false);
+  };
+  
+  const addMediaToProfile = (file, type, duration) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const newMedia = {
+        id: Date.now(),
+        type: type,
+        url: e.target.result, // This is the base64 data URL
+        caption: file.name,
+        likes: 0,
+        duration: duration ? `${Math.round(duration)}s` : null
+      };
+      setFormData(prev => ({
+        ...prev,
+        media: [...prev.media, newMedia]
+      }));
+    };
+    reader.readAsDataURL(file);
   };
 
   const handleLogin = () => {
@@ -534,15 +575,42 @@ export default function DateMoneyApp() {
                 </div>
                 <div className="grid grid-cols-4 gap-3">
                   {formData.media.map(item => (
-                    <div key={item.id} className="relative aspect-square bg-gradient-to-br from-pink-200 to-purple-200 rounded-lg flex items-center justify-center text-4xl">
-                      {item.url}
-                      {item.type === 'video' && (
+                    <div key={item.id} className="relative aspect-square bg-gray-100 rounded-lg overflow-hidden">
+                      {item.type === 'video' ? (
+                        <video 
+                          src={item.url} 
+                          className="w-full h-full object-cover"
+                          controls
+                        />
+                      ) : (
+                        <img 
+                          src={item.url} 
+                          alt={item.caption}
+                          className="w-full h-full object-cover"
+                        />
+                      )}
+                      {item.duration && (
                         <span className="absolute bottom-2 right-2 bg-black bg-opacity-70 text-white text-xs px-2 py-1 rounded">
                           {item.duration}
                         </span>
                       )}
+                      <button
+                        onClick={() => setFormData(prev => ({
+                          ...prev,
+                          media: prev.media.filter(m => m.id !== item.id)
+                        }))}
+                        className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
                     </div>
                   ))}
+                  {formData.media.length === 0 && (
+                    <div className="col-span-4 text-center py-8 text-gray-400">
+                      <Camera className="w-12 h-12 mx-auto mb-2 opacity-50" />
+                      <p className="text-sm">No media uploaded yet</p>
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -607,7 +675,7 @@ export default function DateMoneyApp() {
                     </button>
                   </div>
                   <p className="text-xs text-gray-500 mt-4 text-center">
-                    Note: This is a demo. In production, actual file upload would work here.
+                    Upload photos (max 10MB) or videos (max 10 seconds, 10MB)
                   </p>
                 </div>
               </div>
@@ -662,9 +730,20 @@ export default function DateMoneyApp() {
 
                     <div className="grid grid-cols-3 gap-2 mb-4">
                       {companion.media.slice(0, 3).map(item => (
-                        <div key={item.id} className="relative aspect-square bg-gradient-to-br from-pink-200 to-purple-200 rounded-lg flex items-center justify-center text-3xl cursor-pointer hover:opacity-80 transition">
-                          {item.url}
-                          {item.type === 'video' && (
+                        <div key={item.id} className="relative aspect-square bg-gray-100 rounded-lg overflow-hidden cursor-pointer hover:opacity-80 transition">
+                          {item.type === 'video' ? (
+                            <video 
+                              src={item.url} 
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <img 
+                              src={item.url} 
+                              alt={item.caption}
+                              className="w-full h-full object-cover"
+                            />
+                          )}
+                          {item.duration && (
                             <span className="absolute bottom-1 right-1 bg-black bg-opacity-70 text-white text-xs px-1 rounded">
                               {item.duration}
                             </span>
