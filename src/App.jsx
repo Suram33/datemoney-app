@@ -1,16 +1,17 @@
 import React, { useState } from 'react';
-import { Clock, MapPin, DollarSign, Heart, Star, Coffee, Utensils, Film, Music, ShoppingBag, Plus, Search, CheckCircle, CreditCard, Send, Image, Video, MessageCircle, ArrowLeft, Mail, Lock } from 'lucide-react';
+import { Calendar, Clock, MapPin, Heart, Star, Coffee, Utensils, Film, Music, ShoppingBag, Plus, Search, CheckCircle, Send, MessageCircle, ArrowLeft, Mail, Lock, Upload, Video, X, Camera } from 'lucide-react';
 
 export default function DateMoneyApp() {
   const [userType, setUserType] = useState(null);
   const [view, setView] = useState('home');
   const [selectedCompanion, setSelectedCompanion] = useState(null);
-  const [bookingDetails, setBookingDetails] = useState({ hours: 1, date: '', time: '' });
+  const [meetingDetails, setMeetingDetails] = useState({ hours: 1, date: '', time: '' });
   const [chatMessage, setChatMessage] = useState('');
   const [activeChat, setActiveChat] = useState(null);
   const [showReviews, setShowReviews] = useState(false);
   const [newReview, setNewReview] = useState({ rating: 5, comment: '' });
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [showMediaUpload, setShowMediaUpload] = useState(false);
   
   const [companions, setCompanions] = useState([
     {
@@ -18,17 +19,27 @@ export default function DateMoneyApp() {
       name: 'Sarah Miller',
       age: 28,
       photo: '👩‍🦰',
-      pricePerHour: 25,
+      pricePerHour: 500,
       rating: 4.8,
       reviews: 47,
       activities: ['Coffee', 'Food', 'Shopping'],
       bio: 'Love meeting new people! Great conversationalist who enjoys trying new cafes and restaurants.',
       location: 'Downtown',
       verified: true,
-      posts: [
-        { id: 1, type: 'image', content: '📸', caption: 'Coffee date today!', likes: 45 },
-        { id: 2, type: 'video', content: '🎥', caption: 'Day out shopping', likes: 67 }
+      media: [
+        { id: 1, type: 'image', url: '📸', caption: 'Coffee date vibes!', likes: 45 },
+        { id: 2, type: 'video', url: '🎥', caption: 'Day out shopping', duration: '8s', likes: 67 },
+        { id: 3, type: 'image', url: '📸', caption: 'Sunset walk', likes: 89 }
       ],
+      availability: {
+        monday: ['10:00-14:00', '16:00-20:00'],
+        tuesday: ['10:00-14:00', '16:00-20:00'],
+        wednesday: ['10:00-14:00'],
+        thursday: ['10:00-14:00', '16:00-20:00'],
+        friday: ['14:00-22:00'],
+        saturday: ['12:00-22:00'],
+        sunday: ['12:00-18:00']
+      },
       reviewsList: [
         { user: 'John D.', rating: 5, comment: 'Amazing company! Very friendly and great conversation.', date: '2 days ago' },
         { user: 'Mike R.', rating: 4, comment: 'Had a nice coffee date. Would recommend!', date: '1 week ago' }
@@ -40,40 +51,26 @@ export default function DateMoneyApp() {
       name: 'Alex Chen',
       age: 32,
       photo: '👨',
-      pricePerHour: 30,
+      pricePerHour: 600,
       rating: 4.9,
       reviews: 63,
       activities: ['Coffee', 'Movies', 'Music'],
       bio: 'Film enthusiast and coffee lover. Always up for interesting conversations about art and culture.',
       location: 'Midtown',
       verified: true,
-      posts: [
-        { id: 1, type: 'image', content: '📸', caption: 'Movie night vibes', likes: 89 },
-        { id: 2, type: 'image', content: '📸', caption: 'New cafe discovery!', likes: 54 }
+      media: [
+        { id: 1, type: 'video', url: '🎥', caption: 'Movie recommendations', duration: '10s', likes: 89 },
+        { id: 2, type: 'image', url: '📸', caption: 'New cafe discovery!', likes: 54 }
       ],
+      availability: {
+        monday: ['18:00-22:00'],
+        wednesday: ['18:00-22:00'],
+        friday: ['16:00-23:00'],
+        saturday: ['14:00-23:00'],
+        sunday: ['14:00-20:00']
+      },
       reviewsList: [
         { user: 'Emma S.', rating: 5, comment: 'Best companion ever! So knowledgeable about films.', date: '3 days ago' }
-      ],
-      chatHistory: []
-    },
-    {
-      id: 3,
-      name: 'Maya Patel',
-      age: 26,
-      photo: '👩',
-      pricePerHour: 20,
-      rating: 4.7,
-      reviews: 34,
-      activities: ['Food', 'Shopping', 'Coffee'],
-      bio: 'Foodie who loves exploring new restaurants. Great company for lunch or dinner dates!',
-      location: 'Uptown',
-      verified: true,
-      posts: [
-        { id: 1, type: 'video', content: '🎥', caption: 'Trying new restaurant!', likes: 123 },
-        { id: 2, type: 'image', content: '📸', caption: 'Shopping haul', likes: 76 }
-      ],
-      reviewsList: [
-        { user: 'David L.', rating: 5, comment: 'Such a fun person to hang out with!', date: '5 days ago' }
       ],
       chatHistory: []
     }
@@ -85,7 +82,17 @@ export default function DateMoneyApp() {
     bio: '',
     pricePerHour: '',
     location: '',
-    activities: []
+    activities: [],
+    media: [],
+    availability: {
+      monday: [],
+      tuesday: [],
+      wednesday: [],
+      thursday: [],
+      friday: [],
+      saturday: [],
+      sunday: []
+    }
   });
 
   const [clientProfile, setClientProfile] = useState({
@@ -110,6 +117,8 @@ export default function DateMoneyApp() {
   };
 
   const activityOptions = ['Coffee', 'Food', 'Movies', 'Music', 'Shopping'];
+  const daysOfWeek = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+  const timeSlots = ['09:00-12:00', '12:00-15:00', '15:00-18:00', '18:00-21:00', '21:00-24:00'];
 
   const toggleActivity = (activity) => {
     setFormData(prev => ({
@@ -118,6 +127,34 @@ export default function DateMoneyApp() {
         ? prev.activities.filter(a => a !== activity)
         : [...prev.activities, activity]
     }));
+  };
+
+  const toggleAvailability = (day, slot) => {
+    setFormData(prev => ({
+      ...prev,
+      availability: {
+        ...prev.availability,
+        [day]: prev.availability[day].includes(slot)
+          ? prev.availability[day].filter(s => s !== slot)
+          : [...prev.availability[day], slot]
+      }
+    }));
+  };
+
+  const handleMediaUpload = (type) => {
+    const newMedia = {
+      id: Date.now(),
+      type: type,
+      url: type === 'video' ? '🎥' : '📸',
+      caption: 'New post',
+      likes: 0,
+      duration: type === 'video' ? '7s' : null
+    };
+    setFormData(prev => ({
+      ...prev,
+      media: [...prev.media, newMedia]
+    }));
+    setShowMediaUpload(false);
   };
 
   const handleLogin = () => {
@@ -151,19 +188,34 @@ export default function DateMoneyApp() {
         bio: formData.bio,
         location: formData.location,
         verified: true,
-        posts: [],
+        media: formData.media,
+        availability: formData.availability,
         reviewsList: [],
         chatHistory: []
       };
       setCompanions([...companions, newCompanion]);
-      setFormData({ name: '', age: '', bio: '', pricePerHour: '', location: '', activities: [] });
+      setFormData({ 
+        name: '', 
+        age: '', 
+        bio: '', 
+        pricePerHour: '', 
+        location: '', 
+        activities: [], 
+        media: [],
+        availability: {
+          monday: [], tuesday: [], wednesday: [], thursday: [], friday: [], saturday: [], sunday: []
+        }
+      });
       setView('browse');
+      alert('Profile created successfully! 🎉');
+    } else {
+      alert('Please fill all required fields');
     }
   };
 
-  const handleBooking = (companion) => {
+  const handleMeetRequest = (companion) => {
     setSelectedCompanion(companion);
-    setView('payment');
+    setView('meet-request');
   };
 
   const openChat = (companion) => {
@@ -212,8 +264,7 @@ export default function DateMoneyApp() {
     }
   };
 
-  const totalAmount = selectedCompanion ? selectedCompanion.pricePerHour * bookingDetails.hours : 0;
-  const chatPrice = 5;
+  const totalAmount = selectedCompanion ? selectedCompanion.pricePerHour * meetingDetails.hours : 0;
 
   if (!userType) {
     return (
@@ -224,7 +275,7 @@ export default function DateMoneyApp() {
             <h1 className="text-5xl font-bold bg-gradient-to-r from-pink-500 to-purple-500 bg-clip-text text-transparent mb-3">
               DateMoney
             </h1>
-            <p className="text-gray-600 text-lg">Connect, Spend Time, Get Paid</p>
+            <p className="text-gray-600 text-lg">Connect, Meet, Get Paid</p>
           </div>
 
           <div className="grid md:grid-cols-2 gap-6">
@@ -236,7 +287,7 @@ export default function DateMoneyApp() {
                 <Search className="w-8 h-8 text-purple-600" />
               </div>
               <h2 className="text-2xl font-bold text-gray-800 mb-3">Find a Companion</h2>
-              <p className="text-gray-600 mb-4">Browse verified companions, view their posts, chat, and book quality time together</p>
+              <p className="text-gray-600 mb-4">Browse companions, view photos/videos, free chat, and meet!</p>
               <div className="flex items-center gap-2 text-sm text-purple-600 font-medium">
                 <span>Get Started</span>
                 <span>→</span>
@@ -248,10 +299,10 @@ export default function DateMoneyApp() {
               className="bg-white rounded-2xl p-8 shadow-xl hover:shadow-2xl transition cursor-pointer border-2 border-transparent hover:border-pink-300"
             >
               <div className="bg-pink-100 w-16 h-16 rounded-full flex items-center justify-center mb-4">
-                <DollarSign className="w-8 h-8 text-pink-600" />
+                <Heart className="w-8 h-8 text-pink-600" />
               </div>
               <h2 className="text-2xl font-bold text-gray-800 mb-3">Become a Companion</h2>
-              <p className="text-gray-600 mb-4">Earn money, post photos/videos, chat with clients, and build your profile</p>
+              <p className="text-gray-600 mb-4">Set your schedule, upload photos/videos, chat free, earn money!</p>
               <div className="flex items-center gap-2 text-sm text-pink-600 font-medium">
                 <span>Start Earning</span>
                 <span>→</span>
@@ -322,7 +373,7 @@ export default function DateMoneyApp() {
               {authForm.isSignUp ? 'Create Account' : 'Welcome Back'}
             </h2>
             <p className="text-gray-600 mb-8">
-              {authForm.isSignUp ? 'Sign up to start browsing companions' : 'Log in to your account'}
+              {authForm.isSignUp ? 'Sign up to start browsing' : 'Log in to your account'}
             </p>
 
             <div className="bg-white rounded-xl shadow-lg p-6 space-y-6">
@@ -382,24 +433,14 @@ export default function DateMoneyApp() {
                   {authForm.isSignUp ? 'Already have an account? Log in' : "Don't have an account? Sign up"}
                 </button>
               </div>
-
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                <div className="flex items-start gap-3">
-                  <CheckCircle className="w-5 h-5 text-blue-600 mt-0.5" />
-                  <div>
-                    <h3 className="font-semibold text-blue-900 mb-1">Simple & Secure</h3>
-                    <p className="text-sm text-blue-700">No phone verification needed. Just email and password!</p>
-                  </div>
-                </div>
-              </div>
             </div>
           </div>
         )}
 
         {view === 'companion-setup' && (
-          <div className="max-w-2xl mx-auto">
+          <div className="max-w-3xl mx-auto">
             <h2 className="text-3xl font-bold text-gray-800 mb-2">Create Your Companion Profile</h2>
-            <p className="text-gray-600 mb-8">Fill in your details to start earning!</p>
+            <p className="text-gray-600 mb-8">Set up your profile with photos, videos, and availability!</p>
 
             <div className="bg-white rounded-xl shadow-lg p-6 space-y-6">
               <div className="grid grid-cols-2 gap-4">
@@ -455,7 +496,7 @@ export default function DateMoneyApp() {
                   onChange={(e) => setFormData({...formData, bio: e.target.value})}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                   rows="4"
-                  placeholder="Tell people about yourself and what makes you a great companion..."
+                  placeholder="Tell people about yourself..."
                 />
               </div>
 
@@ -480,6 +521,58 @@ export default function DateMoneyApp() {
                 </div>
               </div>
 
+              <div>
+                <div className="flex items-center justify-between mb-3">
+                  <label className="block text-sm font-medium text-gray-700">Photos & Videos</label>
+                  <button
+                    onClick={() => setShowMediaUpload(true)}
+                    className="flex items-center gap-2 px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition"
+                  >
+                    <Upload className="w-4 h-4" />
+                    Upload Media
+                  </button>
+                </div>
+                <div className="grid grid-cols-4 gap-3">
+                  {formData.media.map(item => (
+                    <div key={item.id} className="relative aspect-square bg-gradient-to-br from-pink-200 to-purple-200 rounded-lg flex items-center justify-center text-4xl">
+                      {item.url}
+                      {item.type === 'video' && (
+                        <span className="absolute bottom-2 right-2 bg-black bg-opacity-70 text-white text-xs px-2 py-1 rounded">
+                          {item.duration}
+                        </span>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-3">Set Your Availability</label>
+                <div className="space-y-3">
+                  {daysOfWeek.map(day => (
+                    <div key={day} className="bg-gray-50 p-4 rounded-lg">
+                      <div className="font-medium text-gray-800 mb-2 capitalize">{day}</div>
+                      <div className="flex flex-wrap gap-2">
+                        {timeSlots.map(slot => (
+                          <button
+                            key={slot}
+                            type="button"
+                            onClick={() => toggleAvailability(day, slot)}
+                            className={`px-3 py-1 rounded-lg text-sm font-medium transition ${
+                              formData.availability[day].includes(slot)
+                                ? 'bg-green-500 text-white'
+                                : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-100'
+                            }`}
+                          >
+                            {slot}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
               <button
                 onClick={handleCompanionSubmit}
                 className="w-full bg-gradient-to-r from-pink-500 to-purple-500 text-white py-3 rounded-lg font-semibold hover:from-pink-600 hover:to-purple-600 transition"
@@ -487,13 +580,45 @@ export default function DateMoneyApp() {
                 Create Profile
               </button>
             </div>
+
+            {showMediaUpload && (
+              <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+                <div className="bg-white rounded-xl p-6 max-w-md w-full">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-xl font-bold text-gray-800">Upload Media</h3>
+                    <button onClick={() => setShowMediaUpload(false)} className="text-gray-500 hover:text-gray-700">
+                      <X className="w-6 h-6" />
+                    </button>
+                  </div>
+                  <div className="space-y-3">
+                    <button
+                      onClick={() => handleMediaUpload('image')}
+                      className="w-full flex items-center justify-center gap-3 p-4 border-2 border-purple-300 rounded-lg hover:bg-purple-50 transition"
+                    >
+                      <Camera className="w-6 h-6 text-purple-600" />
+                      <span className="font-medium text-gray-800">Upload Photo</span>
+                    </button>
+                    <button
+                      onClick={() => handleMediaUpload('video')}
+                      className="w-full flex items-center justify-center gap-3 p-4 border-2 border-pink-300 rounded-lg hover:bg-pink-50 transition"
+                    >
+                      <Video className="w-6 h-6 text-pink-600" />
+                      <span className="font-medium text-gray-800">Upload Video (5-10s)</span>
+                    </button>
+                  </div>
+                  <p className="text-xs text-gray-500 mt-4 text-center">
+                    Note: This is a demo. In production, actual file upload would work here.
+                  </p>
+                </div>
+              </div>
+            )}
           </div>
         )}
 
         {view === 'browse' && (
           <div>
             <h2 className="text-3xl font-bold text-gray-800 mb-2">Find Your Perfect Companion</h2>
-            <p className="text-gray-600 mb-8">All companions are verified. View posts, chat, and book!</p>
+            <p className="text-gray-600 mb-8">Browse profiles, view media, FREE chat, and arrange meetings!</p>
             
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {companions.map(companion => (
@@ -516,7 +641,6 @@ export default function DateMoneyApp() {
                       <div className="flex items-center gap-1 bg-yellow-50 px-2 py-1 rounded">
                         <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" />
                         <span className="text-sm font-semibold text-gray-700">{companion.rating}</span>
-                        <span className="text-xs text-gray-500">({companion.reviews})</span>
                       </div>
                     </div>
 
@@ -537,11 +661,26 @@ export default function DateMoneyApp() {
                     </div>
 
                     <div className="grid grid-cols-3 gap-2 mb-4">
-                      {companion.posts.slice(0, 3).map(post => (
-                        <div key={post.id} className="aspect-square bg-gradient-to-br from-pink-200 to-purple-200 rounded-lg flex items-center justify-center text-3xl cursor-pointer hover:opacity-80 transition">
-                          {post.content}
+                      {companion.media.slice(0, 3).map(item => (
+                        <div key={item.id} className="relative aspect-square bg-gradient-to-br from-pink-200 to-purple-200 rounded-lg flex items-center justify-center text-3xl cursor-pointer hover:opacity-80 transition">
+                          {item.url}
+                          {item.type === 'video' && (
+                            <span className="absolute bottom-1 right-1 bg-black bg-opacity-70 text-white text-xs px-1 rounded">
+                              {item.duration}
+                            </span>
+                          )}
                         </div>
                       ))}
+                    </div>
+
+                    <div className="bg-green-50 border border-green-200 rounded-lg p-3 mb-4">
+                      <div className="flex items-center gap-2 mb-1">
+                        <Calendar className="w-4 h-4 text-green-600" />
+                        <span className="text-sm font-semibold text-green-900">Available Today</span>
+                      </div>
+                      <div className="text-xs text-green-700">
+                        {Object.entries(companion.availability).find(([day]) => day === 'monday')?.[1]?.slice(0, 2).join(', ') || 'Check schedule'}
+                      </div>
                     </div>
 
                     <button 
@@ -557,7 +696,7 @@ export default function DateMoneyApp() {
                         className="flex-1 flex items-center justify-center gap-2 bg-blue-50 text-blue-600 px-3 py-2 rounded-lg font-medium hover:bg-blue-100 transition"
                       >
                         <MessageCircle className="w-4 h-4" />
-                        Chat (₹{chatPrice})
+                        Chat FREE
                       </button>
                     </div>
 
@@ -567,10 +706,10 @@ export default function DateMoneyApp() {
                         <span className="text-sm text-gray-500">/hr</span>
                       </div>
                       <button 
-                        onClick={() => handleBooking(companion)}
+                        onClick={() => handleMeetRequest(companion)}
                         className="bg-gradient-to-r from-pink-500 to-purple-500 text-white px-4 py-2 rounded-lg font-medium hover:from-pink-600 hover:to-purple-600 transition"
                       >
-                        Book Now
+                        Meet & Pay
                       </button>
                     </div>
                   </div>
@@ -620,8 +759,7 @@ export default function DateMoneyApp() {
                         <div className="flex items-center justify-between mb-2">
                           <div className="flex items-center gap-2">
                             <div className="w-8 h-8 bg-purple-200 rounded-full flex items-center justify-center text-purple-700 font-semibold">
-                              {review.user
-                                [0]}
+                              {review.user[0]}
                             </div>
                             <span className="font-semibold text-gray-800">{review.user}</span>
                           </div>
@@ -658,8 +796,8 @@ export default function DateMoneyApp() {
                     </div>
                   </div>
                   <div className="text-white text-right">
-                    <p className="text-sm">Chat Rate</p>
-                    <p className="font-bold">₹{chatPrice}/session</p>
+                    <p className="text-sm font-bold">FREE Chat</p>
+                    <p className="text-xs">No charges!</p>
                   </div>
                 </div>
               </div>
@@ -669,8 +807,8 @@ export default function DateMoneyApp() {
                   <div className="h-full flex items-center justify-center text-gray-400">
                     <div className="text-center">
                       <MessageCircle className="w-12 h-12 mx-auto mb-2 opacity-50" />
-                      <p>Start your conversation!</p>
-                      <p className="text-sm mt-1">₹{chatPrice} will be charged for this chat session</p>
+                      <p className="font-semibold">Start your conversation!</p>
+                      <p className="text-sm mt-1">Chat is completely FREE 🎉</p>
                     </div>
                   </div>
                 ) : (
@@ -716,7 +854,7 @@ export default function DateMoneyApp() {
           </div>
         )}
 
-        {view === 'payment' && selectedCompanion && (
+        {view === 'meet-request' && selectedCompanion && (
           <div className="max-w-2xl mx-auto">
             <button 
               onClick={() => setView('browse')}
@@ -726,7 +864,7 @@ export default function DateMoneyApp() {
             </button>
 
             <div className="bg-white rounded-xl shadow-lg p-6 space-y-6">
-              <h2 className="text-2xl font-bold text-gray-800">Complete Your Booking</h2>
+              <h2 className="text-2xl font-bold text-gray-800">Request a Meeting</h2>
 
               <div className="bg-purple-50 rounded-lg p-4">
                 <div className="flex items-center gap-4">
@@ -742,22 +880,36 @@ export default function DateMoneyApp() {
                 </div>
               </div>
 
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <h3 className="font-semibold text-blue-900 mb-2">Available Times This Week</h3>
+                <div className="space-y-2">
+                  {Object.entries(selectedCompanion.availability).slice(0, 3).map(([day, slots]) => (
+                    slots.length > 0 && (
+                      <div key={day} className="text-sm">
+                        <span className="font-medium text-blue-900 capitalize">{day}: </span>
+                        <span className="text-blue-700">{slots.join(', ')}</span>
+                      </div>
+                    )
+                  ))}
+                </div>
+              </div>
+
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Date</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Select Date</label>
                   <input
                     type="date"
-                    value={bookingDetails.date}
-                    onChange={(e) => setBookingDetails({...bookingDetails, date: e.target.value})}
+                    value={meetingDetails.date}
+                    onChange={(e) => setMeetingDetails({...meetingDetails, date: e.target.value})}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Time</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Select Time</label>
                   <input
                     type="time"
-                    value={bookingDetails.time}
-                    onChange={(e) => setBookingDetails({...bookingDetails, time: e.target.value})}
+                    value={meetingDetails.time}
+                    onChange={(e) => setMeetingDetails({...meetingDetails, time: e.target.value})}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                   />
                 </div>
@@ -767,91 +919,59 @@ export default function DateMoneyApp() {
                 <label className="block text-sm font-medium text-gray-700 mb-2">Duration (Hours)</label>
                 <input
                   type="number"
-                  value={bookingDetails.hours}
-                  onChange={(e) => setBookingDetails({...bookingDetails, hours: parseInt(e.target.value) || 1})}
+                  value={meetingDetails.hours}
+                  onChange={(e) => setMeetingDetails({...meetingDetails, hours: parseInt(e.target.value) || 1})}
                   min="1"
+                  max="8"
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                 />
               </div>
 
-              <div className="bg-gray-50 rounded-lg p-4">
-                <div className="flex justify-between mb-2">
+              <div className="bg-gradient-to-r from-pink-50 to-purple-50 rounded-lg p-4 border-2 border-purple-300">
+                <div className="flex justify-between items-center mb-2">
                   <span className="text-gray-600">Rate per hour</span>
-                  <span className="font-semibold">₹{selectedCompanion.pricePerHour}</span>
+                  <span className="font-semibold text-gray-800">₹{selectedCompanion.pricePerHour}</span>
                 </div>
-                <div className="flex justify-between mb-2">
+                <div className="flex justify-between items-center mb-3">
                   <span className="text-gray-600">Duration</span>
-                  <span className="font-semibold">{bookingDetails.hours} hour(s)</span>
+                  <span className="font-semibold text-gray-800">{meetingDetails.hours} hour(s)</span>
                 </div>
-                <div className="border-t pt-2 mt-2">
-                  <div className="flex justify-between">
+                <div className="border-t-2 border-purple-300 pt-3">
+                  <div className="flex justify-between items-center">
                     <span className="text-lg font-bold text-gray-800">Total Amount</span>
-                    <span className="text-2xl font-bold text-purple-600">₹{totalAmount}</span>
+                    <span className="text-3xl font-bold bg-gradient-to-r from-pink-600 to-purple-600 bg-clip-text text-transparent">
+                      ₹{totalAmount}
+                    </span>
                   </div>
                 </div>
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-3">Payment Method</label>
-                <div className="space-y-3">
-                  <button className="w-full flex items-center justify-between p-4 border-2 border-purple-300 rounded-lg hover:bg-purple-50 transition">
-                    <div className="flex items-center gap-3">
-                      <div className="w-12 h-12 bg-purple-600 rounded-lg flex items-center justify-center text-white font-bold">
-                        Pe
-                      </div>
-                      <div className="text-left">
-                        <div className="font-semibold text-gray-800">PhonePe</div>
-                        <div className="text-xs text-gray-500">UPI Payment</div>
-                      </div>
-                    </div>
-                    <input type="radio" name="payment" className="w-5 h-5" defaultChecked />
-                  </button>
-
-                  <button className="w-full flex items-center justify-between p-4 border-2 border-gray-300 rounded-lg hover:bg-gray-50 transition">
-                    <div className="flex items-center gap-3">
-                      <div className="w-12 h-12 bg-blue-600 rounded-lg flex items-center justify-center text-white font-bold">
-                        GP
-                      </div>
-                      <div className="text-left">
-                        <div className="font-semibold text-gray-800">Google Pay</div>
-                        <div className="text-xs text-gray-500">UPI Payment</div>
-                      </div>
-                    </div>
-                    <input type="radio" name="payment" className="w-5 h-5" />
-                  </button>
-
-                  <button className="w-full flex items-center justify-between p-4 border-2 border-gray-300 rounded-lg hover:bg-gray-50 transition">
-                    <div className="flex items-center gap-3">
-                      <div className="w-12 h-12 bg-gradient-to-br from-green-400 to-blue-500 rounded-lg flex items-center justify-center text-white font-bold">
-                        P
-                      </div>
-                      <div className="text-left">
-                        <div className="font-semibold text-gray-800">Paytm</div>
-                        <div className="text-xs text-gray-500">Wallet & UPI</div>
-                      </div>
-                    </div>
-                    <input type="radio" name="payment" className="w-5 h-5" />
-                  </button>
-
-                  <button className="w-full flex items-center justify-between p-4 border-2 border-gray-300 rounded-lg hover:bg-gray-50 transition">
-                    <div className="flex items-center gap-3">
-                      <CreditCard className="w-12 h-12 text-gray-600" />
-                      <div className="text-left">
-                        <div className="font-semibold text-gray-800">Credit/Debit Card</div>
-                        <div className="text-xs text-gray-500">Visa, Mastercard, RuPay</div>
-                      </div>
-                    </div>
-                    <input type="radio" name="payment" className="w-5 h-5" />
-                  </button>
-                </div>
+              <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                <h3 className="font-semibold text-green-900 mb-2 flex items-center gap-2">
+                  <CheckCircle className="w-5 h-5" />
+                  How Payment Works
+                </h3>
+                <ul className="space-y-1 text-sm text-green-800">
+                  <li>• Send meeting request with date & time</li>
+                  <li>• Meet at agreed location</li>
+                  <li>• Pay directly after meeting (Cash/UPI)</li>
+                  <li>• Leave a review to help others</li>
+                </ul>
               </div>
 
-              <button className="w-full bg-gradient-to-r from-pink-500 to-purple-500 text-white py-4 rounded-lg font-bold text-lg hover:from-pink-600 hover:to-purple-600 transition">
-                Pay ₹{totalAmount} & Confirm Booking
+              <button 
+                onClick={() => {
+                  alert(`Meeting request sent to ${selectedCompanion.name}! They will confirm via chat.`);
+                  setView('chat');
+                  setActiveChat(selectedCompanion);
+                }}
+                className="w-full bg-gradient-to-r from-pink-500 to-purple-500 text-white py-4 rounded-lg font-bold text-lg hover:from-pink-600 hover:to-purple-600 transition"
+              >
+                Send Meeting Request
               </button>
 
               <p className="text-xs text-gray-500 text-center">
-                Payment is held securely. Released to companion after successful completion of date.
+                Payment is made directly to companion after meeting. No advance payment required!
               </p>
             </div>
           </div>
