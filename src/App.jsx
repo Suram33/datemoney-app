@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Clock, MapPin, DollarSign, Heart, Star, Coffee, Utensils, Film, Music, ShoppingBag, Plus, Search, CheckCircle, CreditCard, Send, Image, Video, MessageCircle, ArrowLeft, Camera } from 'lucide-react';
+import { Clock, MapPin, DollarSign, Heart, Star, Coffee, Utensils, Film, Music, ShoppingBag, Plus, Search, CheckCircle, CreditCard, Send, Image, Video, MessageCircle, ArrowLeft, Mail, Lock } from 'lucide-react';
 
 export default function DateMoneyApp() {
   const [userType, setUserType] = useState(null);
@@ -10,6 +10,7 @@ export default function DateMoneyApp() {
   const [activeChat, setActiveChat] = useState(null);
   const [showReviews, setShowReviews] = useState(false);
   const [newReview, setNewReview] = useState({ rating: 5, comment: '' });
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
   
   const [companions, setCompanions] = useState([
     {
@@ -84,15 +85,20 @@ export default function DateMoneyApp() {
     bio: '',
     pricePerHour: '',
     location: '',
-    activities: [],
-    phone: '',
-    aadhar: ''
+    activities: []
   });
 
   const [clientProfile, setClientProfile] = useState({
     name: '',
-    phone: '',
+    email: '',
     verified: false
+  });
+
+  const [authForm, setAuthForm] = useState({
+    email: '',
+    password: '',
+    name: '',
+    isSignUp: false
   });
 
   const activityIcons = {
@@ -114,9 +120,25 @@ export default function DateMoneyApp() {
     }));
   };
 
+  const handleLogin = () => {
+    if (authForm.email && authForm.password) {
+      if (authForm.isSignUp && !authForm.name) {
+        alert('Please enter your name');
+        return;
+      }
+      setClientProfile({ 
+        name: authForm.name || authForm.email.split('@')[0], 
+        email: authForm.email, 
+        verified: true 
+      });
+      setIsLoggedIn(true);
+      setView('browse');
+    }
+  };
+
   const handleCompanionSubmit = () => {
     if (formData.name && formData.age && formData.pricePerHour && formData.bio && 
-        formData.location && formData.activities.length > 0 && formData.phone && formData.aadhar) {
+        formData.location && formData.activities.length > 0) {
       const newCompanion = {
         id: companions.length + 1,
         name: formData.name,
@@ -134,14 +156,7 @@ export default function DateMoneyApp() {
         chatHistory: []
       };
       setCompanions([...companions, newCompanion]);
-      setFormData({ name: '', age: '', bio: '', pricePerHour: '', location: '', activities: [], phone: '', aadhar: '' });
-      setView('browse');
-    }
-  };
-
-  const handleClientVerification = () => {
-    if (clientProfile.name && clientProfile.phone) {
-      setClientProfile({ ...clientProfile, verified: true });
+      setFormData({ name: '', age: '', bio: '', pricePerHour: '', location: '', activities: [] });
       setView('browse');
     }
   };
@@ -214,7 +229,7 @@ export default function DateMoneyApp() {
 
           <div className="grid md:grid-cols-2 gap-6">
             <div 
-              onClick={() => { setUserType('client'); setView('client-setup'); }}
+              onClick={() => { setUserType('client'); setView('client-login'); }}
               className="bg-white rounded-2xl p-8 shadow-xl hover:shadow-2xl transition cursor-pointer border-2 border-transparent hover:border-purple-300"
             >
               <div className="bg-purple-100 w-16 h-16 rounded-full flex items-center justify-center mb-4">
@@ -258,10 +273,10 @@ export default function DateMoneyApp() {
               <h1 className="text-2xl font-bold bg-gradient-to-r from-pink-500 to-purple-500 bg-clip-text text-transparent">
                 DateMoney
               </h1>
-              {userType === 'client' && clientProfile.verified && (
+              {isLoggedIn && clientProfile.verified && (
                 <span className="flex items-center gap-1 bg-green-100 text-green-700 px-3 py-1 rounded-full text-sm font-medium">
                   <CheckCircle className="w-4 h-4" />
-                  Verified
+                  {clientProfile.name}
                 </span>
               )}
             </div>
@@ -287,7 +302,7 @@ export default function DateMoneyApp() {
                   </button>
                 </>
               )}
-              {userType === 'client' && clientProfile.verified && view !== 'chat' && (
+              {userType === 'client' && isLoggedIn && view !== 'chat' && (
                 <button
                   onClick={() => setView('browse')}
                   className="px-4 py-2 rounded-lg font-medium bg-purple-500 text-white hover:bg-purple-600 transition"
@@ -301,58 +316,90 @@ export default function DateMoneyApp() {
       </div>
 
       <div className="max-w-6xl mx-auto px-4 py-8">
-        {view === 'client-setup' && (
-          <div className="max-w-xl mx-auto">
-            <h2 className="text-3xl font-bold text-gray-800 mb-2">Verify Your Profile</h2>
-            <p className="text-gray-600 mb-8">Quick verification to ensure safe connections</p>
+        {view === 'client-login' && (
+          <div className="max-w-md mx-auto">
+            <h2 className="text-3xl font-bold text-gray-800 mb-2">
+              {authForm.isSignUp ? 'Create Account' : 'Welcome Back'}
+            </h2>
+            <p className="text-gray-600 mb-8">
+              {authForm.isSignUp ? 'Sign up to start browsing companions' : 'Log in to your account'}
+            </p>
 
             <div className="bg-white rounded-xl shadow-lg p-6 space-y-6">
+              {authForm.isSignUp && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Full Name</label>
+                  <input
+                    type="text"
+                    value={authForm.name}
+                    onChange={(e) => setAuthForm({...authForm, name: e.target.value})}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                    placeholder="Enter your full name"
+                  />
+                </div>
+              )}
+
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Full Name</label>
-                <input
-                  type="text"
-                  value={clientProfile.name}
-                  onChange={(e) => setClientProfile({...clientProfile, name: e.target.value})}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                  placeholder="Enter your full name"
-                />
+                <label className="block text-sm font-medium text-gray-700 mb-2">Email Address</label>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
+                  <input
+                    type="email"
+                    value={authForm.email}
+                    onChange={(e) => setAuthForm({...authForm, email: e.target.value})}
+                    className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                    placeholder="your@email.com"
+                  />
+                </div>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Phone Number</label>
-                <input
-                  type="tel"
-                  value={clientProfile.phone}
-                  onChange={(e) => setClientProfile({...clientProfile, phone: e.target.value})}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                  placeholder="Enter your phone number"
-                />
+                <label className="block text-sm font-medium text-gray-700 mb-2">Password</label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
+                  <input
+                    type="password"
+                    value={authForm.password}
+                    onChange={(e) => setAuthForm({...authForm, password: e.target.value})}
+                    className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                    placeholder="••••••••"
+                  />
+                </div>
+              </div>
+
+              <button
+                onClick={handleLogin}
+                className="w-full bg-gradient-to-r from-pink-500 to-purple-500 text-white py-3 rounded-lg font-semibold hover:from-pink-600 hover:to-purple-600 transition"
+              >
+                {authForm.isSignUp ? 'Sign Up' : 'Log In'}
+              </button>
+
+              <div className="text-center">
+                <button
+                  onClick={() => setAuthForm({...authForm, isSignUp: !authForm.isSignUp})}
+                  className="text-purple-600 hover:text-purple-700 text-sm font-medium"
+                >
+                  {authForm.isSignUp ? 'Already have an account? Log in' : "Don't have an account? Sign up"}
+                </button>
               </div>
 
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                 <div className="flex items-start gap-3">
                   <CheckCircle className="w-5 h-5 text-blue-600 mt-0.5" />
                   <div>
-                    <h3 className="font-semibold text-blue-900 mb-1">Verification Process</h3>
-                    <p className="text-sm text-blue-700">We'll send an OTP to verify your phone number for safety</p>
+                    <h3 className="font-semibold text-blue-900 mb-1">Simple & Secure</h3>
+                    <p className="text-sm text-blue-700">No phone verification needed. Just email and password!</p>
                   </div>
                 </div>
               </div>
-
-              <button
-                onClick={handleClientVerification}
-                className="w-full bg-gradient-to-r from-pink-500 to-purple-500 text-white py-3 rounded-lg font-semibold hover:from-pink-600 hover:to-purple-600 transition"
-              >
-                Verify & Continue
-              </button>
             </div>
           </div>
         )}
 
         {view === 'companion-setup' && (
           <div className="max-w-2xl mx-auto">
-            <h2 className="text-3xl font-bold text-gray-800 mb-2">Create Your Profile</h2>
-            <p className="text-gray-600 mb-8">Complete verification to start earning!</p>
+            <h2 className="text-3xl font-bold text-gray-800 mb-2">Create Your Companion Profile</h2>
+            <p className="text-gray-600 mb-8">Fill in your details to start earning!</p>
 
             <div className="bg-white rounded-xl shadow-lg p-6 space-y-6">
               <div className="grid grid-cols-2 gap-4">
@@ -376,30 +423,6 @@ export default function DateMoneyApp() {
                     placeholder="Your age"
                   />
                 </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Phone Number</label>
-                <input
-                  type="tel"
-                  value={formData.phone}
-                  onChange={(e) => setFormData({...formData, phone: e.target.value})}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                  placeholder="Enter phone number"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Aadhar Number (For Verification)</label>
-                <input
-                  type="text"
-                  value={formData.aadhar}
-                  onChange={(e) => setFormData({...formData, aadhar: e.target.value})}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                  placeholder="XXXX-XXXX-XXXX"
-                  maxLength="14"
-                />
-                <p className="text-xs text-gray-500 mt-1">Your Aadhar is encrypted and used only for verification</p>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
@@ -461,7 +484,7 @@ export default function DateMoneyApp() {
                 onClick={handleCompanionSubmit}
                 className="w-full bg-gradient-to-r from-pink-500 to-purple-500 text-white py-3 rounded-lg font-semibold hover:from-pink-600 hover:to-purple-600 transition"
               >
-                Submit for Verification
+                Create Profile
               </button>
             </div>
           </div>
@@ -560,7 +583,7 @@ export default function DateMoneyApp() {
                 <div className="bg-white rounded-xl max-w-2xl w-full max-h-[80vh] overflow-y-auto p-6">
                   <div className="flex items-center justify-between mb-4">
                     <h3 className="text-2xl font-bold text-gray-800">Reviews for {selectedCompanion.name}</h3>
-                    <button onClick={() => setShowReviews(false)} className="text-gray-500 hover:text-gray-700">
+                    <button onClick={() => setShowReviews(false)} className="text-gray-500 hover:text-gray-700 text-2xl">
                       ✕
                     </button>
                   </div>
@@ -597,7 +620,8 @@ export default function DateMoneyApp() {
                         <div className="flex items-center justify-between mb-2">
                           <div className="flex items-center gap-2">
                             <div className="w-8 h-8 bg-purple-200 rounded-full flex items-center justify-center text-purple-700 font-semibold">
-                              {review.user[0]}
+                              {review.user
+                                [0]}
                             </div>
                             <span className="font-semibold text-gray-800">{review.user}</span>
                           </div>
@@ -619,8 +643,7 @@ export default function DateMoneyApp() {
         )}
 
         {view === 'chat' && activeChat && (
-          <div className="max-w-2xl mx
-            -auto">
+          <div className="max-w-2xl mx-auto">
             <div className="bg-white rounded-xl shadow-lg overflow-hidden">
               <div className="bg-gradient-to-r from-pink-500 to-purple-500 p-4">
                 <div className="flex items-center justify-between">
@@ -687,16 +710,6 @@ export default function DateMoneyApp() {
                     <Send className="w-4 h-4" />
                     Send
                   </button>
-                </div>
-              </div>
-            </div>
-
-            <div className="mt-4 bg-blue-50 border border-blue-200 rounded-lg p-4">
-              <div className="flex items-start gap-3">
-                <MessageCircle className="w-5 h-5 text-blue-600 mt-0.5" />
-                <div>
-                  <h4 className="font-semibold text-blue-900 mb-1">Chat Payment</h4>
-                  <p className="text-sm text-blue-700">₹{chatPrice} will be charged when you start chatting. Payment is processed securely.</p>
                 </div>
               </div>
             </div>
