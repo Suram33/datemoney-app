@@ -141,20 +141,76 @@ export default function DateMoneyApp() {
     }));
   };
 
-  const handleMediaUpload = (type) => {
-    // Create a file input element
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = type === 'video' ? 'video/*' : 'image/*';
-    
-    input.onchange = (e) => {
-      const file = e.target.files[0];
-      if (file) {
-        // Check file size (max 10MB)
-        if (file.size > 10 * 1024 * 1024) {
-          alert('File too large! Maximum size is 10MB');
-          return;
+  import { uploadImageToCloudinary, uploadVideoToCloudinary } from './cloudinaryConfig';
+
+// Replace the old handleMediaUpload function with this:
+const handleMediaUpload = (type) => {
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = type === 'video' ? 'video/*' : 'image/*';
+  
+  input.onchange = async (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      // Check file size (max 10MB)
+      if (file.size > 10 * 1024 * 1024) {
+        alert('File too large! Maximum size is 10MB');
+        return;
+      }
+      
+      // Show loading message
+      alert('Uploading... Please wait');
+      
+      try {
+        let uploadedUrl;
+        
+        if (type === 'video') {
+          // Check video duration
+          const video = document.createElement('video');
+          video.preload = 'metadata';
+          video.onloadedmetadata = async () => {
+            window.URL.revokeObjectURL(video.src);
+            if (video.duration > 10) {
+              alert('Video too long! Maximum duration is 10 seconds');
+              return;
+            }
+            
+            // Upload to Cloudinary
+            uploadedUrl = await uploadVideoToCloudinary(file);
+            addMediaToProfile(uploadedUrl, type, Math.round(video.duration));
+          };
+          video.src = URL.createObjectURL(file);
+        } else {
+          // Upload image to Cloudinary
+          uploadedUrl = await uploadImageToCloudinary(file);
+          addMediaToProfile(uploadedUrl, type, null);
         }
+      } catch (error) {
+        alert('Upload failed! Please try again.');
+        console.error('Upload error:', error);
+      }
+    }
+  };
+  
+  input.click();
+  setShowMediaUpload(false);
+};
+
+const addMediaToProfile = (url, type, duration) => {
+  const newMedia = {
+    id: Date.now(),
+    type: type,
+    url: url, // Now this is the actual Cloudinary URL!
+    caption: 'New post',
+    likes: 0,
+    duration: duration ? `${duration}s` : null
+  };
+  setFormData(prev => ({
+    ...prev,
+    media: [...prev.media, newMedia]
+  }));
+  alert('Upload successful! ✅');
+};
         
         // Check video duration for videos
         if (type === 'video') {
