@@ -1,7 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Calendar, Clock, MapPin, Heart, Star, Coffee, Utensils, Film, Music, ShoppingBag, Plus, Search, CheckCircle, Send, MessageCircle, ArrowLeft, Mail, Lock, Upload, Video, X, Camera } from 'lucide-react';
 import { uploadImageToCloudinary, uploadVideoToCloudinary } from './cloudinaryConfig';
-import { signUp, signIn, onAuthChange, addCompanion, getCompanions } from './firebaseConfig';
 
 export default function DateMoneyApp() {
   const [userType, setUserType] = useState(null);
